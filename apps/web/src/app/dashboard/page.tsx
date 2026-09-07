@@ -28,7 +28,7 @@ export default function DashboardPage() {
       url += `?project_id=${selectedProject}`;
     }
 
-    fetch(url)
+    fetch(url, { cache: "no-store" })
       .then((res) => {
         if (!res.ok) throw new Error("Unauthorized");
         return res.json();
@@ -202,28 +202,36 @@ export default function DashboardPage() {
         onClose={() => setIsModalOpen(false)}
         onSubmitRepo={async (url) => {
           try {
-            await fetch("/api/scans/repo", {
+            const res = await fetch("/api/scans/repo", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ url })
             });
+            if (!res.ok) {
+              const err = await res.json();
+              throw new Error(err.detail || "Failed to start scan");
+            }
             alert("Repository scan initiated successfully!");
             window.location.reload();
-          } catch (e) {
-            alert("Failed to start scan");
+          } catch (e: any) {
+            alert(`Error: ${e.message}`);
           }
         }}
         onSubmitDomain={async (url) => {
           try {
-            await fetch("/api/scans/domain", {
+            const res = await fetch("/api/scans/domain", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ url })
             });
+            if (!res.ok) {
+              const err = await res.json();
+              throw new Error(err.detail || "Failed to start scan");
+            }
             alert("Domain scan initiated successfully!");
             window.location.reload();
-          } catch (e) {
-            alert("Failed to start scan");
+          } catch (e: any) {
+            alert(`Error: ${e.message}`);
           }
         }}
       />

@@ -22,7 +22,9 @@ export async function POST(request: Request) {
     });
 
     if (!res.ok) {
-        throw new Error("Backend repo scan failed");
+        const errText = await res.text();
+        console.error("Backend Error Text:", errText);
+        return NextResponse.json({ detail: errText }, { status: res.status });
     }
 
     return NextResponse.json({ success: true });

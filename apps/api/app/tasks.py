@@ -70,9 +70,7 @@ class Asset(Base):
     last_checked = Column(DateTime, default=datetime.utcnow)
     created_at = Column(DateTime, default=datetime.utcnow)
 
-DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql+psycopg://postgres:password@db:5432/cryptosentinel")
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+from app.db.session import SessionLocal
 
 def dummy_scan_task(scan_id: int, file_path: str, org_id: int = 1):
     """Fallback legacy task. Extracts ZIP, runs Semgrep and Cert parsing, saves to DB."""

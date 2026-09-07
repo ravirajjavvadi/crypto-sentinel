@@ -18,7 +18,8 @@ export async function GET(request: Request) {
     const res = await fetch(`${backendUrl}/api/scans/stats${query}`, {
       headers: {
         Authorization: `Bearer ${session.access_token}`
-      }
+      },
+      cache: "no-store"
     });
 
     if (!res.ok) {

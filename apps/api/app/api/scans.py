@@ -29,15 +29,15 @@ async def scan_repo(
     current_user: User = Depends(get_current_active_user),
 ):
     # Find or create project
+    project_name = request.repo_url.split("/")[-1]
     project = db.query(Project).filter(
-        Project.repository_url == request.repo_url,
+        Project.name == project_name,
         Project.organization_id == current_user.organization_id
     ).first()
     
     if not project:
         project = Project(
-            name=request.repo_url.split("/")[-1],
-            repository_url=request.repo_url,
+            name=project_name,
             organization_id=current_user.organization_id
         )
         db.add(project)
