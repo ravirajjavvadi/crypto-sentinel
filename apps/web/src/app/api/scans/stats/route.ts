@@ -27,7 +27,8 @@ export async function GET(request: Request) {
     console.error(e);
     // Fallback if backend is down
     return NextResponse.json({
-        projects: 0,
+        projects_count: 0,
+        projects_list: [],
         assets: 0,
         critical_findings: 0,
         quantum_exposure: 0,

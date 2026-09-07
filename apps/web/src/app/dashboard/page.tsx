@@ -97,7 +97,7 @@ export default function DashboardPage() {
           <div className="glass-panel p-6 border-l-2 border-l-cyan-500 relative overflow-hidden group">
             <div className="absolute right-0 top-0 opacity-10 transform translate-x-4 -translate-y-4 group-hover:scale-110 transition-transform"><svg className="w-24 h-24 text-cyan-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm3.293 1.293a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 01-1.414-1.414L7.586 10 5.293 7.707a1 1 0 010-1.414zM11 12a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd"></path></svg></div>
             <dt className="text-xs text-gray-500 tracking-widest mb-1">MONITORED PROJECTS</dt>
-            <dd className="text-4xl font-light text-white font-sans">{stats.projects}</dd>
+            <dd className="text-4xl font-light text-white font-sans">{stats.projects_count}</dd>
           </div>
           
           <div className="glass-panel p-6 border-l-2 border-l-blue-500 relative overflow-hidden group">
@@ -159,12 +159,18 @@ export default function DashboardPage() {
           </div>
           
           <div className="glass-panel p-6 flex flex-col">
-            <h2 className="text-sm text-cyan-400 tracking-widest border-b border-gray-800 pb-2 mb-4">SYSTEM LOGS</h2>
-            <div className="flex-1 space-y-2 text-[10px] text-gray-500">
-              <p><span className="text-cyan-600">[SYS]</span> Identity verified for operator.</p>
-              <p><span className="text-cyan-600">[SYS]</span> Connected to Organization Node.</p>
-              <p><span className="text-green-600">[OK]</span> Core engine ready.</p>
-              <p className="animate-pulse text-yellow-600">&gt; Waiting for input...</p>
+            <h2 className="text-sm text-cyan-400 tracking-widest border-b border-gray-800 pb-2 mb-4">MONITORED TARGETS</h2>
+            <div className="flex-1 space-y-2 text-xs font-mono text-gray-400 overflow-y-auto">
+              {stats.projects_list && stats.projects_list.length > 0 ? (
+                stats.projects_list.map((proj: any) => (
+                  <div key={proj.id} className="p-2 border border-gray-800 rounded bg-black/20 flex items-center gap-2">
+                    <svg className="w-4 h-4 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    {proj.name}
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-600 italic">No targets monitored yet.</p>
+              )}
             </div>
           </div>
         </div>
@@ -181,6 +187,7 @@ export default function DashboardPage() {
               body: JSON.stringify({ url })
             });
             alert("Repository scan initiated successfully!");
+            window.location.reload();
           } catch (e) {
             alert("Failed to start scan");
           }
@@ -193,6 +200,7 @@ export default function DashboardPage() {
               body: JSON.stringify({ url })
             });
             alert("Domain scan initiated successfully!");
+            window.location.reload();
           } catch (e) {
             alert("Failed to start scan");
           }

@@ -12,8 +12,7 @@ export async function POST(request: Request) {
   try {
     const { url } = await request.json();
     const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-    // Note: Project 1 is hardcoded for MVP
-    const res = await fetch(`${backendUrl}/api/scans/project/1/scan/repo`, {
+    const res = await fetch(`${backendUrl}/api/scans/scan/repo`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

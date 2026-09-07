@@ -1,18 +1,14 @@
 import os
 import shutil
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, BackgroundTasks
 from sqlalchemy.orm import Session
-from celery import Celery
 from app.db.session import get_db
 from app.models.tenancy import Project, Scan, User, UserRole, ScanStatus
 from app.schemas.scan import ScanResponse
 from app.api.deps import get_current_active_user
+from app.tasks import repo_scan_task, domain_scan_task, dummy_scan_task
 
 router = APIRouter()
-
-# Setup celery client to point to worker
-REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
-celery_app = Celery("worker", broker=REDIS_URL)
 
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -25,53 +21,70 @@ class RepoScanRequest(BaseModel):
 class DomainScanRequest(BaseModel):
     domain_url: str
 
-@router.post("/project/{project_id}/scan/repo", response_model=ScanResponse)
+@router.post("/scan/repo", response_model=ScanResponse)
 async def scan_repo(
-    project_id: int,
     request: RepoScanRequest,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
+    # Find or create project
     project = db.query(Project).filter(
-        Project.id == project_id,
+        Project.repository_url == request.repo_url,
         Project.organization_id == current_user.organization_id
     ).first()
+    
     if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
+        project = Project(
+            name=request.repo_url.split("/")[-1],
+            repository_url=request.repo_url,
+            organization_id=current_user.organization_id
+        )
+        db.add(project)
+        db.commit()
+        db.refresh(project)
 
     scan = Scan(project_id=project.id, status=ScanStatus.PENDING)
     db.add(scan)
     db.commit()
     db.refresh(scan)
 
-    celery_app.send_task("app.tasks.repo_scan_task", args=[scan.id, request.repo_url, current_user.organization_id])
+    background_tasks.add_task(repo_scan_task, scan.id, request.repo_url, current_user.organization_id)
     return scan
 
-@router.post("/project/{project_id}/scan/domain", response_model=ScanResponse)
+@router.post("/scan/domain", response_model=ScanResponse)
 async def scan_domain(
-    project_id: int,
     request: DomainScanRequest,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     project = db.query(Project).filter(
-        Project.id == project_id,
+        Project.name == request.domain_url,
         Project.organization_id == current_user.organization_id
     ).first()
+
     if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
+        project = Project(
+            name=request.domain_url,
+            organization_id=current_user.organization_id
+        )
+        db.add(project)
+        db.commit()
+        db.refresh(project)
 
     scan = Scan(project_id=project.id, status=ScanStatus.PENDING)
     db.add(scan)
     db.commit()
     db.refresh(scan)
 
-    celery_app.send_task("app.tasks.domain_scan_task", args=[scan.id, request.domain_url, current_user.organization_id])
+    background_tasks.add_task(domain_scan_task, scan.id, request.domain_url, current_user.organization_id)
     return scan
 
 @router.post("/project/{project_id}/scan", response_model=ScanResponse)
 async def upload_and_scan(
     project_id: int,
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
@@ -101,10 +114,7 @@ async def upload_and_scan(
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    # Trigger celery task (from apps/worker/app/tasks.py)
-    # The absolute file path needs to be accessible by the worker container.
-    # In docker-compose, we would share a volume for /uploads
-    celery_app.send_task("app.tasks.dummy_scan_task", args=[scan.id, file_path])
+    background_tasks.add_task(dummy_scan_task, scan.id, file_path)
 
     return scan
 
@@ -115,7 +125,9 @@ def get_stats(
 ):
     org_id = current_user.organization_id
     
-    projects_count = db.query(Project).filter(Project.organization_id == org_id).count()
+    projects_q = db.query(Project).filter(Project.organization_id == org_id).all()
+    projects_list = [{"id": p.id, "name": p.name} for p in projects_q]
+    
     from app.models.tenancy import Asset, Finding
     
     assets_count = db.query(Asset).filter(Asset.organization_id == org_id).count()
@@ -145,7 +157,8 @@ def get_stats(
         })
         
     return {
-        "projects": projects_count,
+        "projects_count": len(projects_list),
+        "projects_list": projects_list,
         "assets": assets_count,
         "critical_findings": critical_findings,
         "quantum_exposure": quantum_exposure,

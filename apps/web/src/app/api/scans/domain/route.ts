@@ -12,7 +12,7 @@ export async function POST(request: Request) {
   try {
     const { url } = await request.json();
     const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-    const res = await fetch(`${backendUrl}/api/scans/project/1/scan/domain`, {
+    const res = await fetch(`${backendUrl}/api/scans/scan/domain`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
