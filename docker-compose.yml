@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: cryptosentinel
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  api:
+    build:
+      context: ./apps/api
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+psycopg://postgres:Sandhya%408885860218@db.dsxhtodkbefqxsqyhuyv.supabase.co:5432/postgres
+      - REDIS_URL=redis://redis:6379/0
+    volumes:
+      - uploads_data:/app/uploads
+    depends_on:
+      - db
+      - redis
+
+  worker:
+    build:
+      context: ./apps/worker
+    environment:
+      - DATABASE_URL=postgresql+psycopg://postgres:Sandhya%408885860218@db.dsxhtodkbefqxsqyhuyv.supabase.co:5432/postgres
+      - REDIS_URL=redis://redis:6379/0
+      - SEMGREP_RULES_DIR=/app/rules
+    volumes:
+      - uploads_data:/app/uploads
+      - ./packages/detection-rules:/app/rules
+    depends_on:
+      - db
+      - redis
+
+volumes:
+  postgres_data:
+  redis_data:
+  uploads_data:

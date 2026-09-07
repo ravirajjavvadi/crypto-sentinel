@@ -1,0 +1,55 @@
+rules:
+  - id: insecure-md5-hash
+    patterns:
+      - pattern: hashlib.md5(...)
+    message: "MD5 is considered cryptographically broken. It is vulnerable to collision attacks. Use SHA-256 or better."
+    languages:
+      - python
+    severity: ERROR
+    metadata:
+      cwe: "CWE-327: Use of a Broken or Risky Cryptographic Algorithm"
+      owasp: "A2: Cryptographic Failures"
+      algorithm: "MD5"
+      quantum_safe: false
+
+  - id: insecure-sha1-hash
+    patterns:
+      - pattern: hashlib.sha1(...)
+    message: "SHA-1 is considered cryptographically broken. It is vulnerable to collision attacks. Use SHA-256 or better."
+    languages:
+      - python
+    severity: ERROR
+    metadata:
+      cwe: "CWE-327: Use of a Broken or Risky Cryptographic Algorithm"
+      owasp: "A2: Cryptographic Failures"
+      algorithm: "SHA-1"
+      quantum_safe: false
+
+  - id: hardcoded-symmetric-key
+    patterns:
+      - pattern-either:
+          - pattern: cryptography.fernet.Fernet("...")
+          - pattern: cryptography.fernet.Fernet(b"...")
+    message: "Hardcoded symmetric key detected. Keys should be loaded securely from environment variables or a key management system."
+    languages:
+      - python
+    severity: ERROR
+    metadata:
+      cwe: "CWE-798: Use of Hard-coded Credentials"
+      algorithm: "AES"
+      quantum_safe: true
+
+  - id: weak-rsa-key-generation
+    patterns:
+      - pattern: rsa.generate_private_key(..., key_size=$SIZE, ...)
+      - metavariable-comparison:
+          metavariable: $SIZE
+          comparison: $SIZE < 2048
+    message: "RSA keys must be at least 2048 bits long to be considered secure against classical attacks. For post-quantum security, RSA is entirely vulnerable regardless of size."
+    languages:
+      - python
+    severity: ERROR
+    metadata:
+      cwe: "CWE-326: Inadequate Encryption Strength"
+      algorithm: "RSA"
+      quantum_safe: false
