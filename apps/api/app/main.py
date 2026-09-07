@@ -14,6 +14,7 @@ try:
         conn.execute(text("ALTER TABLE assets ADD COLUMN IF NOT EXISTS expiration_date TIMESTAMP"))
         conn.execute(text("ALTER TABLE assets ADD COLUMN IF NOT EXISTS domain VARCHAR"))
         conn.execute(text("ALTER TABLE assets ADD COLUMN IF NOT EXISTS version VARCHAR"))
+        conn.execute(text("ALTER TABLE assets ADD COLUMN IF NOT EXISTS last_checked TIMESTAMP"))
         conn.commit()
 except Exception as e:
     print(f"Migration error (safe to ignore if columns exist): {e}")
