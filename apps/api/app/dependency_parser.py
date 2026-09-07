@@ -3,9 +3,9 @@ import json
 import re
 
 KNOWN_CRYPTO_LIBRARIES = {
-    "python": ["cryptography", "pycryptodome", "pycrypto", "PyNaCl", "ecdsa", "rsa", "hashlib"],
-    "javascript": ["crypto", "crypto-js", "bcrypt", "jsonwebtoken", "node-forge", "tweetnacl"],
-    "java": ["bouncycastle", "org.bouncycastle", "javax.crypto", "commons-crypto"]
+    "python": ["cryptography", "pycryptodome", "pycrypto", "PyNaCl", "ecdsa", "rsa", "hashlib", "passlib", "bcrypt", "jwt", "python-jose", "jwcrypto"],
+    "javascript": ["crypto", "crypto-js", "bcrypt", "jsonwebtoken", "node-forge", "tweetnacl", "jose", "jws"],
+    "java": ["bouncycastle", "org.bouncycastle", "javax.crypto", "commons-crypto", "jjwt"]
 }
 
 def parse_requirements_txt(file_path: str):
@@ -40,6 +40,18 @@ def parse_package_json(file_path: str):
             data = json.load(f)
             deps = {**data.get('dependencies', {}), **data.get('devDependencies', {})}
             
+            # Check if the package itself is a crypto library
+            pkg_name_self = data.get('name', '')
+            if pkg_name_self and any(known.lower() in pkg_name_self.lower() for known in KNOWN_CRYPTO_LIBRARIES["javascript"]):
+                assets.append({
+                    "name": pkg_name_self,
+                    "asset_type": "LIBRARY",
+                    "algorithm": "VARIOUS",
+                    "key_size": None,
+                    "is_quantum_safe": False,
+                    "version": data.get('version', 'unknown')
+                })
+
             for pkg_name, version in deps.items():
                 if any(known.lower() in pkg_name.lower() for known in KNOWN_CRYPTO_LIBRARIES["javascript"]):
                     assets.append({
