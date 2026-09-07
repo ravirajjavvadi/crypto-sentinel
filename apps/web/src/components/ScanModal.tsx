@@ -39,14 +39,14 @@ export default function ScanModal({ isOpen, onClose, onSubmitRepo, onSubmitDomai
         <div className="flex gap-4 mb-6 border-b border-gray-800 pb-2">
           <button 
             type="button"
-            className={\`text-sm tracking-widest uppercase ${activeTab === "REPO" ? "text-cyan-400 border-b-2 border-cyan-400" : "text-gray-500"}\}
+            className={`text-sm tracking-widest uppercase ${activeTab === "REPO" ? "text-cyan-400 border-b-2 border-cyan-400" : "text-gray-500"}`}
             onClick={() => setActiveTab("REPO")}
           >
             GitHub Repository
           </button>
           <button 
             type="button"
-            className={\`text-sm tracking-widest uppercase ${activeTab === "DOMAIN" ? "text-blue-400 border-b-2 border-blue-400" : "text-gray-500"}\}
+            className={`text-sm tracking-widest uppercase ${activeTab === "DOMAIN" ? "text-blue-400 border-b-2 border-blue-400" : "text-gray-500"}`}
             onClick={() => setActiveTab("DOMAIN")}
           >
             Live Domain
