@@ -10,24 +10,17 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<any>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.push("/login");
-      return;
-    }
-
     // Fetch org
-    fetch("/api/organizations/me", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
+    fetch("/api/organizations/me")
+      .then((res) => {
+        if (!res.ok) throw new Error("Unauthorized");
+        return res.json();
+      })
       .then((data) => setOrg(data))
       .catch(() => router.push("/login"));
 
     // Fetch stats
-    fetch("/api/scans/stats", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    fetch("/api/scans/stats")
       .then((res) => res.json())
       .then((data) => setStats(data))
       .catch(console.error);
@@ -68,7 +61,12 @@ export default function DashboardPage() {
                 ORG: {org.name.toUpperCase()}
               </span>
               <button 
-                onClick={() => { localStorage.removeItem("token"); router.push("/login"); }}
+                onClick={async () => { 
+                  const { createClient } = await import('@/utils/supabase/client');
+                  const supabase = createClient();
+                  await supabase.auth.signOut();
+                  router.push("/login"); 
+                }}
                 className="text-xs tracking-widest text-red-400 hover:text-red-300 transition-colors uppercase flex items-center gap-2"
               >
                 [ TERMINATE ]

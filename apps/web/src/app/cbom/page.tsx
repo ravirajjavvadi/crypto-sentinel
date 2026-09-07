@@ -9,19 +9,13 @@ export default function CBOMPage() {
   const [stats, setStats] = useState<any>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.push("/login");
-      return;
-    }
-
-    fetch("/api/scans/stats", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
+    fetch("/api/scans/stats")
+      .then((res) => {
+        if (!res.ok) throw new Error("Unauthorized");
+        return res.json();
+      })
       .then((data) => setStats(data))
-      .catch(console.error);
-
+      .catch(() => router.push("/login"));
   }, [router]);
 
   const handleExport = (format: string) => {

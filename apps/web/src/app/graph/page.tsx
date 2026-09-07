@@ -8,10 +8,10 @@ export default function GraphPage() {
   const router = useRouter();
   
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.push("/login");
-    }
+    // Just rely on middleware for now, or check via fetch
+    fetch("/api/organizations/me").then(res => {
+        if (!res.ok) router.push("/login");
+    }).catch(() => router.push("/login"));
   }, [router]);
 
   return (
