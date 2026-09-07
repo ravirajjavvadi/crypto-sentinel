@@ -8,15 +8,18 @@ export default function CBOMPage() {
   const router = useRouter();
   const [stats, setStats] = useState<any>(null);
 
+  const [selectedProject, setSelectedProject] = useState<string>("ALL");
+
   useEffect(() => {
-    fetch("/api/scans/stats")
+    const query = selectedProject !== "ALL" ? `?project_id=${selectedProject}` : "";
+    fetch(`/api/scans/stats${query}`)
       .then((res) => {
         if (!res.ok) throw new Error("Unauthorized");
         return res.json();
       })
       .then((data) => setStats(data))
       .catch(() => router.push("/login"));
-  }, [router]);
+  }, [router, selectedProject]);
 
   const handleExport = (format: string) => {
     // In a real app, this would trigger a download from the backend
@@ -47,6 +50,21 @@ export default function CBOMPage() {
               <span className="text-xl font-black text-white tracking-widest glow-text uppercase">CBOM Export</span>
             </div>
             <div className="flex items-center gap-6">
+              <div className="relative">
+                <select 
+                  value={selectedProject}
+                  onChange={(e) => setSelectedProject(e.target.value)}
+                  className="appearance-none bg-black border border-cyan-800 text-cyan-400 px-4 py-1.5 pr-8 text-xs tracking-widest outline-none focus:border-cyan-500 transition-colors cursor-pointer w-48 uppercase"
+                >
+                  <option value="ALL">ALL TARGETS</option>
+                  {stats.projects_list?.map((p: any) => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-cyan-500">
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
+              </div>
               <Link href="/dashboard" className="text-xs text-cyan-400 hover:text-cyan-300 tracking-widest uppercase transition-colors hidden sm:block">
                 [ RETURN TO DASHBOARD ]
               </Link>

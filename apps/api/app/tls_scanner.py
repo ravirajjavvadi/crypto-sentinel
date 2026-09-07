@@ -45,7 +45,7 @@ def scan_domain(domain: str, port: int = 443):
             "algorithm": algorithm,
             "key_size": key_size,
             "is_quantum_safe": False,
-            "expiration_date": cert.not_valid_after.isoformat() if hasattr(cert, 'not_valid_after') else None,
+            "expiration_date": cert.not_valid_after if hasattr(cert, 'not_valid_after') else None,
             "domain": domain,
             "version": None
         }
