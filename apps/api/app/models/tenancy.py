@@ -139,6 +139,10 @@ class Asset(Base):
     algorithm = Column(String)
     key_size = Column(Integer)
     is_quantum_safe = Column(Boolean, default=False)
+    expiration_date = Column(DateTime, nullable=True)
+    domain = Column(String, nullable=True)
+    version = Column(String, nullable=True)
+    last_checked = Column(DateTime, default=datetime.utcnow)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     scan = relationship("Scan", back_populates="assets")

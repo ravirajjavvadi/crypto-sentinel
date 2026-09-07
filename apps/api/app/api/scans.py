@@ -17,6 +17,58 @@ celery_app = Celery("worker", broker=REDIS_URL)
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
+from pydantic import BaseModel
+
+class RepoScanRequest(BaseModel):
+    repo_url: str
+
+class DomainScanRequest(BaseModel):
+    domain_url: str
+
+@router.post("/project/{project_id}/scan/repo", response_model=ScanResponse)
+async def scan_repo(
+    project_id: int,
+    request: RepoScanRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    project = db.query(Project).filter(
+        Project.id == project_id,
+        Project.organization_id == current_user.organization_id
+    ).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    scan = Scan(project_id=project.id, status=ScanStatus.PENDING)
+    db.add(scan)
+    db.commit()
+    db.refresh(scan)
+
+    celery_app.send_task("app.tasks.repo_scan_task", args=[scan.id, request.repo_url, current_user.organization_id])
+    return scan
+
+@router.post("/project/{project_id}/scan/domain", response_model=ScanResponse)
+async def scan_domain(
+    project_id: int,
+    request: DomainScanRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    project = db.query(Project).filter(
+        Project.id == project_id,
+        Project.organization_id == current_user.organization_id
+    ).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    scan = Scan(project_id=project.id, status=ScanStatus.PENDING)
+    db.add(scan)
+    db.commit()
+    db.refresh(scan)
+
+    celery_app.send_task("app.tasks.domain_scan_task", args=[scan.id, request.domain_url, current_user.organization_id])
+    return scan
+
 @router.post("/project/{project_id}/scan", response_model=ScanResponse)
 async def upload_and_scan(
     project_id: int,
@@ -55,6 +107,50 @@ async def upload_and_scan(
     celery_app.send_task("app.tasks.dummy_scan_task", args=[scan.id, file_path])
 
     return scan
+
+@router.get("/stats", response_model=dict)
+def get_stats(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    org_id = current_user.organization_id
+    
+    projects_count = db.query(Project).filter(Project.organization_id == org_id).count()
+    from app.models.tenancy import Asset, Finding
+    
+    assets_count = db.query(Asset).filter(Asset.organization_id == org_id).count()
+    critical_findings = db.query(Finding).filter(
+        Finding.organization_id == org_id,
+        Finding.severity == "CRITICAL"
+    ).count()
+    quantum_exposure = db.query(Asset).filter(
+        Asset.organization_id == org_id,
+        Asset.is_quantum_safe == False
+    ).count()
+    
+    recent_assets_q = db.query(Asset).filter(Asset.organization_id == org_id).order_by(Asset.created_at.desc()).limit(10).all()
+    
+    recent_assets = []
+    for a in recent_assets_q:
+        recent_assets.append({
+            "id": a.id,
+            "name": a.name,
+            "type": a.asset_type,
+            "algorithm": a.algorithm,
+            "key_size": a.key_size,
+            "safe": a.is_quantum_safe,
+            "expiration_date": a.expiration_date.isoformat() if a.expiration_date else None,
+            "domain": a.domain,
+            "version": a.version
+        })
+        
+    return {
+        "projects": projects_count,
+        "assets": assets_count,
+        "critical_findings": critical_findings,
+        "quantum_exposure": quantum_exposure,
+        "recent_assets": recent_assets
+    }
 
 @router.get("/{scan_id}", response_model=ScanResponse)
 def get_scan_status(

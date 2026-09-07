@@ -36,7 +36,8 @@ def parse_certificate(file_path: str):
             "asset_type": "CERTIFICATE",
             "algorithm": algorithm,
             "key_size": key_size,
-            "is_quantum_safe": is_quantum_safe # None of the classic ones are quantum safe
+            "is_quantum_safe": is_quantum_safe, # None of the classic ones are quantum safe
+            "expiration_date": cert.not_valid_after.isoformat() if hasattr(cert, 'not_valid_after') else None
         }
     except Exception as e:
         print(f"Failed to parse certificate {file_path}: {e}")

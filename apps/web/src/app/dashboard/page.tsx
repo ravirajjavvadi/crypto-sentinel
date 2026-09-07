@@ -173,13 +173,29 @@ export default function DashboardPage() {
       <ScanModal 
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSubmitRepo={(url) => {
-          // TODO: Call backend /scan/repo
-          alert(`Scanning Repo: ${url}`);
+        onSubmitRepo={async (url) => {
+          try {
+            await fetch("/api/scans/repo", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ url })
+            });
+            alert("Repository scan initiated successfully!");
+          } catch (e) {
+            alert("Failed to start scan");
+          }
         }}
-        onSubmitDomain={(url) => {
-          // TODO: Call backend /scan/domain
-          alert(`Scanning Domain: ${url}`);
+        onSubmitDomain={async (url) => {
+          try {
+            await fetch("/api/scans/domain", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ url })
+            });
+            alert("Domain scan initiated successfully!");
+          } catch (e) {
+            alert("Failed to start scan");
+          }
         }}
       />
     </div>
