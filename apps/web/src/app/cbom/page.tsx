@@ -100,6 +100,7 @@ export default function CBOMPage() {
                   <th scope="col" className="px-6 py-4">Algorithm</th>
                   <th scope="col" className="px-6 py-4">Key Size</th>
                   <th scope="col" className="px-6 py-4">PQC Safe</th>
+                  <th scope="col" className="px-6 py-4">Expiry</th>
                   <th scope="col" className="px-6 py-4">OIDs</th>
                 </tr>
               </thead>
@@ -127,6 +128,9 @@ export default function CBOMPage() {
                       ) : (
                         <span className="text-red-400">FALSE</span>
                       )}
+                    </td>
+                    <td className="px-6 py-4 font-mono text-xs text-yellow-500/80">
+                        {asset.expiration_date ? new Date(asset.expiration_date).toLocaleDateString() : "-"}
                     </td>
                     <td className="px-6 py-4 font-mono text-[10px] text-gray-500">
                       {asset.algorithm === "RSA" ? "1.2.840.113549.1.1.1" : (asset.algorithm === "AES-256" ? "2.16.840.1.101.3.4.1.42" : "-")}

@@ -151,6 +151,7 @@ export default function DashboardPage() {
                     <th scope="col" className="px-6 py-3">Type</th>
                     <th scope="col" className="px-6 py-3">Algorithm</th>
                     <th scope="col" className="px-6 py-3">PQC Safe</th>
+                    <th scope="col" className="px-6 py-3">Expiry</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -171,6 +172,9 @@ export default function DashboardPage() {
                         ) : (
                           <span className="bg-red-900/50 text-red-400 border border-red-500/30 px-2 py-1 rounded text-xs animate-pulse">NO</span>
                         )}
+                      </td>
+                      <td className="px-6 py-4 font-mono text-xs text-yellow-500/80">
+                        {asset.expiration_date ? new Date(asset.expiration_date).toLocaleDateString() : "-"}
                       </td>
                     </tr>
                   ))}
