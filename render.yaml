@@ -1,0 +1,40 @@
+services:
+  # 1. FastAPI Backend Service
+  - type: web
+    name: cryptosentinel-api
+    env: docker
+    dockerContext: .
+    dockerfilePath: ./apps/api/Dockerfile
+    region: ohio
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        sync: false # Requires manual entry in dashboard for security
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: cryptosentinel-redis
+          property: connectionString
+
+  # 2. Celery Background Worker
+  - type: worker
+    name: cryptosentinel-worker
+    env: docker
+    dockerContext: .
+    dockerfilePath: ./apps/worker/Dockerfile
+    region: ohio
+    plan: starter # Note: Render free tier doesn't support persistent background workers, requires Starter
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: cryptosentinel-redis
+          property: connectionString
+
+  # 3. Redis Broker for Celery
+  - type: redis
+    name: cryptosentinel-redis
+    region: ohio
+    plan: free
