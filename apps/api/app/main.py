@@ -1,11 +1,22 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 from .db.session import engine
 from .models.tenancy import Base
 from .api import auth, organizations, teams, scans
 
 # Create tables for MVP without alembic (we will add alembic later if needed)
 Base.metadata.create_all(bind=engine)
+
+# Auto-migrate missing columns for existing instances
+try:
+    with engine.connect() as conn:
+        conn.execute(text("ALTER TABLE assets ADD COLUMN IF NOT EXISTS expiration_date TIMESTAMP"))
+        conn.execute(text("ALTER TABLE assets ADD COLUMN IF NOT EXISTS domain VARCHAR"))
+        conn.execute(text("ALTER TABLE assets ADD COLUMN IF NOT EXISTS version VARCHAR"))
+        conn.commit()
+except Exception as e:
+    print(f"Migration error (safe to ignore if columns exist): {e}")
 
 app = FastAPI(title="CryptoSentinel API", version="1.0.0")
 
