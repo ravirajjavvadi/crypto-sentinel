@@ -126,50 +126,54 @@ def get_stats(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    org_id = current_user.organization_id
-    
-    projects_q = db.query(Project).filter(Project.organization_id == org_id).all()
-    projects_list = [{"id": p.id, "name": p.name} for p in projects_q]
-    
-    from app.models.tenancy import Asset, Finding
-    
-    assets_query = db.query(Asset).filter(Asset.organization_id == org_id)
-    findings_query = db.query(Finding).filter(Finding.organization_id == org_id)
-    
-    if project_id:
-        # We need to filter assets and findings by the given project
-        # In this simple MVP, we filter assets by scanning those that belong to scans of this project
-        assets_query = assets_query.join(Scan).filter(Scan.project_id == project_id)
-        findings_query = findings_query.join(Scan).filter(Scan.project_id == project_id)
-
-    assets_count = assets_query.count()
-    critical_findings = findings_query.filter(Finding.severity == "CRITICAL").count()
-    quantum_exposure = assets_query.filter(Asset.is_quantum_safe == False).count()
-    
-    recent_assets_q = assets_query.order_by(Asset.created_at.desc()).limit(10).all()
-    
-    recent_assets = []
-    for a in recent_assets_q:
-        recent_assets.append({
-            "id": a.id,
-            "name": a.name,
-            "type": a.asset_type,
-            "algorithm": a.algorithm,
-            "key_size": a.key_size,
-            "safe": a.is_quantum_safe,
-            "expiration_date": a.expiration_date.isoformat() if a.expiration_date else None,
-            "domain": a.domain,
-            "version": a.version
-        })
+    try:
+        org_id = current_user.organization_id
         
-    return {
-        "projects_count": len(projects_list),
-        "projects_list": projects_list,
-        "assets": assets_count,
-        "critical_findings": critical_findings,
-        "quantum_exposure": quantum_exposure,
-        "recent_assets": recent_assets
-    }
+        projects_q = db.query(Project).filter(Project.organization_id == org_id).all()
+        projects_list = [{"id": p.id, "name": p.name} for p in projects_q]
+        
+        from app.models.tenancy import Asset, Finding
+        
+        assets_query = db.query(Asset).filter(Asset.organization_id == org_id)
+        findings_query = db.query(Finding).filter(Finding.organization_id == org_id)
+        
+        if project_id:
+            # We need to filter assets and findings by the given project
+            # In this simple MVP, we filter assets by scanning those that belong to scans of this project
+            assets_query = assets_query.join(Scan).filter(Scan.project_id == project_id)
+            findings_query = findings_query.join(Scan).filter(Scan.project_id == project_id)
+
+        assets_count = assets_query.count()
+        critical_findings = findings_query.filter(Finding.severity == "CRITICAL").count()
+        quantum_exposure = assets_query.filter(Asset.is_quantum_safe == False).count()
+        
+        recent_assets_q = assets_query.order_by(Asset.created_at.desc()).limit(10).all()
+        
+        recent_assets = []
+        for a in recent_assets_q:
+            recent_assets.append({
+                "id": a.id,
+                "name": a.name,
+                "type": a.asset_type,
+                "algorithm": a.algorithm,
+                "key_size": a.key_size,
+                "safe": a.is_quantum_safe,
+                "expiration_date": a.expiration_date.isoformat() if a.expiration_date else None,
+                "domain": a.domain,
+                "version": a.version
+            })
+            
+        return {
+            "projects_count": len(projects_list),
+            "projects_list": projects_list,
+            "assets": assets_count,
+            "critical_findings": critical_findings,
+            "quantum_exposure": quantum_exposure,
+            "recent_assets": recent_assets
+        }
+    except Exception as e:
+        import traceback
+        raise HTTPException(status_code=500, detail=traceback.format_exc())
 
 @router.get("/{scan_id}", response_model=ScanResponse)
 def get_scan_status(
