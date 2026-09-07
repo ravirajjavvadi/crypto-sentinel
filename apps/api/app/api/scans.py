@@ -118,8 +118,11 @@ async def upload_and_scan(
 
     return scan
 
+from typing import Optional
+
 @router.get("/stats", response_model=dict)
 def get_stats(
+    project_id: Optional[int] = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -130,17 +133,20 @@ def get_stats(
     
     from app.models.tenancy import Asset, Finding
     
-    assets_count = db.query(Asset).filter(Asset.organization_id == org_id).count()
-    critical_findings = db.query(Finding).filter(
-        Finding.organization_id == org_id,
-        Finding.severity == "CRITICAL"
-    ).count()
-    quantum_exposure = db.query(Asset).filter(
-        Asset.organization_id == org_id,
-        Asset.is_quantum_safe == False
-    ).count()
+    assets_query = db.query(Asset).filter(Asset.organization_id == org_id)
+    findings_query = db.query(Finding).filter(Finding.organization_id == org_id)
     
-    recent_assets_q = db.query(Asset).filter(Asset.organization_id == org_id).order_by(Asset.created_at.desc()).limit(10).all()
+    if project_id:
+        # We need to filter assets and findings by the given project
+        # In this simple MVP, we filter assets by scanning those that belong to scans of this project
+        assets_query = assets_query.join(Scan).filter(Scan.project_id == project_id)
+        findings_query = findings_query.join(Scan).filter(Scan.project_id == project_id)
+
+    assets_count = assets_query.count()
+    critical_findings = findings_query.filter(Finding.severity == "CRITICAL").count()
+    quantum_exposure = assets_query.filter(Asset.is_quantum_safe == False).count()
+    
+    recent_assets_q = assets_query.order_by(Asset.created_at.desc()).limit(10).all()
     
     recent_assets = []
     for a in recent_assets_q:

@@ -10,6 +10,7 @@ export default function DashboardPage() {
   const [org, setOrg] = useState<{ name: string } | null>(null);
   const [stats, setStats] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<string>("ALL");
 
   useEffect(() => {
     // Fetch org
@@ -22,12 +23,20 @@ export default function DashboardPage() {
       .catch(() => router.push("/login"));
 
     // Fetch stats
-    fetch("/api/scans/stats")
-      .then((res) => res.json())
+    let url = "/api/scans/stats";
+    if (selectedProject !== "ALL") {
+      url += `?project_id=${selectedProject}`;
+    }
+
+    fetch(url)
+      .then((res) => {
+        if (!res.ok) throw new Error("Unauthorized");
+        return res.json();
+      })
       .then((data) => setStats(data))
       .catch(console.error);
 
-  }, [router]);
+  }, [router, selectedProject]);
 
   if (!org || !stats) return (
     <div className="min-h-screen bg-black text-cyan-400 flex items-center justify-center font-mono">
@@ -84,12 +93,24 @@ export default function DashboardPage() {
             <h1 className="text-3xl font-light text-white tracking-widest uppercase glow-text">Dashboard</h1>
             <p className="text-xs text-gray-500 mt-2 tracking-widest">CRYPTOGRAPHIC TELEMETRY</p>
           </div>
-          <button 
-            className="bg-cyan-500/10 border border-cyan-500 text-cyan-400 px-6 py-2 text-xs tracking-widest hover:bg-cyan-500 hover:text-black transition-all uppercase"
-            onClick={() => setIsModalOpen(true)}
-          >
-            New Scan +
-          </button>
+          <div className="flex gap-4 items-center">
+            <select
+              className="bg-black/50 border border-gray-700 text-cyan-400 px-4 py-2 text-xs tracking-widest focus:border-cyan-500 focus:outline-none uppercase"
+              value={selectedProject}
+              onChange={(e) => setSelectedProject(e.target.value)}
+            >
+              <option value="ALL">All Targets</option>
+              {stats.projects_list && stats.projects_list.map((p: any) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+            <button 
+              className="bg-cyan-500/10 border border-cyan-500 text-cyan-400 px-6 py-2 text-xs tracking-widest hover:bg-cyan-500 hover:text-black transition-all uppercase"
+              onClick={() => setIsModalOpen(true)}
+            >
+              New Scan +
+            </button>
+          </div>
         </header>
         
         {/* Dashboard Stats */}

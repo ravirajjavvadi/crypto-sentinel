@@ -10,8 +10,12 @@ export async function GET(request: Request) {
   }
 
   try {
+    const { searchParams } = new URL(request.url);
+    const projectId = searchParams.get("project_id");
+    const query = projectId ? `?project_id=${projectId}` : "";
+
     const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-    const res = await fetch(`${backendUrl}/api/scans/stats`, {
+    const res = await fetch(`${backendUrl}/api/scans/stats${query}`, {
       headers: {
         Authorization: `Bearer ${session.access_token}`
       }
