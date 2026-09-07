@@ -147,7 +147,7 @@ def get_stats(
         critical_findings = findings_query.filter(Finding.severity == "CRITICAL").count()
         quantum_exposure = assets_query.filter(Asset.is_quantum_safe == False).count()
         
-        recent_assets_q = assets_query.order_by(Asset.created_at.desc()).limit(10).all()
+        recent_assets_q = assets_query.order_by(Asset.created_at.desc()).all()
         
         recent_assets = []
         for a in recent_assets_q:
