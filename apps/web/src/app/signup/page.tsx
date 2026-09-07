@@ -46,9 +46,9 @@ export default function SignupPage() {
       <div className="relative z-10 w-full max-w-md space-y-8 glass-panel p-10 rounded-2xl border-cyan-500/30 shadow-[0_0_50px_rgba(34,211,238,0.1)]">
         <div>
           <h2 className="mt-2 text-center text-3xl font-black tracking-widest text-white uppercase glow-text">
-            Initialize
+            Sign Up
           </h2>
-          <p className="mt-2 text-center text-xs font-mono text-cyan-400">ESTABLISH NEW ORG NODE</p>
+          <p className="mt-2 text-center text-xs font-mono text-cyan-400">Create Organization Workspace</p>
         </div>
         
         <form className="mt-8 space-y-6" onSubmit={handleSignup}>
@@ -59,7 +59,7 @@ export default function SignupPage() {
                 type="text"
                 required
                 className="relative block w-full appearance-none rounded-none border border-white/10 bg-black/50 px-3 py-3 text-white placeholder-gray-500 focus:z-10 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 sm:text-sm font-mono tracking-wider transition-colors"
-                placeholder="[ ORG IDENTIFIER ]"
+                placeholder="Organization Name"
                 value={organization}
                 onChange={(e) => setOrganization(e.target.value)}
               />
@@ -70,7 +70,7 @@ export default function SignupPage() {
                 type="email"
                 required
                 className="relative block w-full appearance-none rounded-none border border-white/10 bg-black/50 px-3 py-3 text-white placeholder-gray-500 focus:z-10 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 sm:text-sm font-mono tracking-wider transition-colors"
-                placeholder="[ OPERATOR EMAIL ]"
+                placeholder="Email Address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -81,7 +81,7 @@ export default function SignupPage() {
                 type="password"
                 required
                 className="relative block w-full appearance-none rounded-none border border-white/10 bg-black/50 px-3 py-3 text-white placeholder-gray-500 focus:z-10 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 sm:text-sm font-mono tracking-wider transition-colors"
-                placeholder="[ SECURITY KEY ]"
+                placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -99,12 +99,12 @@ export default function SignupPage() {
               type="submit"
               className="group relative flex w-full justify-center border border-cyan-500/50 bg-cyan-500/10 px-4 py-3 text-sm font-mono font-bold tracking-widest text-cyan-300 transition-all hover:bg-cyan-500 hover:text-black hover:shadow-[0_0_20px_rgba(34,211,238,0.5)] uppercase"
             >
-              Deploy Node
+              Create Account
             </button>
           </div>
           <div className="text-center">
             <Link href="/login" className="text-xs font-mono text-gray-500 hover:text-cyan-400 transition-colors">
-              [ RETURN TO AUTH ]
+              Already have an account? Log In
             </Link>
           </div>
         </form>

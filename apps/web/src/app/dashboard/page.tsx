@@ -3,11 +3,13 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import ScanModal from "@/components/ScanModal";
 
 export default function DashboardPage() {
   const router = useRouter();
   const [org, setOrg] = useState<{ name: string } | null>(null);
   const [stats, setStats] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     // Fetch org
@@ -69,7 +71,7 @@ export default function DashboardPage() {
                 }}
                 className="text-xs tracking-widest text-red-400 hover:text-red-300 transition-colors uppercase flex items-center gap-2"
               >
-                [ TERMINATE ]
+                Log Out
               </button>
             </div>
           </div>
@@ -79,11 +81,14 @@ export default function DashboardPage() {
       <main className="relative z-10 p-4 md:p-8 max-w-[1920px] mx-auto">
         <header className="mb-8 flex justify-between items-end border-b border-gray-800 pb-4">
           <div>
-            <h1 className="text-3xl font-light text-white tracking-widest uppercase glow-text">Command Center</h1>
-            <p className="text-xs text-gray-500 mt-2 tracking-widest">REAL-TIME CRYPTOGRAPHIC TELEMETRY</p>
+            <h1 className="text-3xl font-light text-white tracking-widest uppercase glow-text">Dashboard</h1>
+            <p className="text-xs text-gray-500 mt-2 tracking-widest">CRYPTOGRAPHIC TELEMETRY</p>
           </div>
-          <button className="bg-cyan-500/10 border border-cyan-500 text-cyan-400 px-6 py-2 text-xs tracking-widest hover:bg-cyan-500 hover:text-black transition-all uppercase">
-            Initialize Scan +
+          <button 
+            className="bg-cyan-500/10 border border-cyan-500 text-cyan-400 px-6 py-2 text-xs tracking-widest hover:bg-cyan-500 hover:text-black transition-all uppercase"
+            onClick={() => setIsModalOpen(true)}
+          >
+            New Scan +
           </button>
         </header>
         
@@ -164,6 +169,19 @@ export default function DashboardPage() {
           </div>
         </div>
       </main>
+      
+      <ScanModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmitRepo={(url) => {
+          // TODO: Call backend /scan/repo
+          alert(`Scanning Repo: ${url}`);
+        }}
+        onSubmitDomain={(url) => {
+          // TODO: Call backend /scan/domain
+          alert(`Scanning Domain: ${url}`);
+        }}
+      />
     </div>
   );
 }
