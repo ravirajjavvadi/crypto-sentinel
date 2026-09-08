@@ -1,0 +1,23 @@
+rules:
+  - id: insecure-md5-hash
+    message: 'MD5 is a cryptographically broken hashing algorithm.'
+    severity: ERROR
+    languages: [python, javascript, typescript, java]
+    pattern-either:
+      - pattern: hashlib.md5(...)
+      - pattern: crypto.createHash('md5')
+      - pattern: MessageDigest.getInstance('MD5')
+  - id: hardcoded-secret-key
+    message: 'Hardcoded secret key or password detected.'
+    severity: ERROR
+    languages: [python, javascript, typescript, java]
+    pattern-either:
+      - pattern: SECRET_KEY = '...'
+      - pattern: password = '...'
+      - pattern: const secret = '...'
+  - id: weak-rsa-key
+    message: 'RSA key size < 2048 is insecure.'
+    severity: WARNING
+    languages: [python]
+    pattern: rsa.generate_private_key(public_exponent=65537, key_size=1024, ...)
+

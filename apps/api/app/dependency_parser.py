@@ -68,11 +68,49 @@ def parse_package_json(file_path: str):
 
 def scan_directory_for_dependencies(directory_path: str):
     assets = []
+    
+    # Try to detect if the repository itself is a known crypto repo based on the root folder name or url
+    repo_name = os.path.basename(directory_path.rstrip('/\\'))
+    if any(known.lower() in repo_name.lower() for known in KNOWN_CRYPTO_LIBRARIES["python"] + KNOWN_CRYPTO_LIBRARIES["javascript"] + KNOWN_CRYPTO_LIBRARIES["java"]):
+        assets.append({
+            "name": repo_name,
+            "asset_type": "LIBRARY",
+            "algorithm": "VARIOUS",
+            "key_size": None,
+            "is_quantum_safe": False,
+            "version": "source"
+        })
+
     for root, _, files in os.walk(directory_path):
         if 'requirements.txt' in files:
             assets.extend(parse_requirements_txt(os.path.join(root, 'requirements.txt')))
         if 'package.json' in files:
             assets.extend(parse_package_json(os.path.join(root, 'package.json')))
+        
+        # Super basic checks for python package names in setup.py or pyproject.toml
+        if 'setup.py' in files or 'pyproject.toml' in files:
+            try:
+                content = ""
+                if 'setup.py' in files:
+                    with open(os.path.join(root, 'setup.py'), 'r', encoding='utf-8', errors='ignore') as f:
+                        content += f.read()
+                if 'pyproject.toml' in files:
+                    with open(os.path.join(root, 'pyproject.toml'), 'r', encoding='utf-8', errors='ignore') as f:
+                        content += f.read()
+                        
+                for known in KNOWN_CRYPTO_LIBRARIES["python"]:
+                    if known in content:
+                        # Avoid duplicates
+                        if not any(a["name"] == known for a in assets):
+                            assets.append({
+                                "name": known,
+                                "asset_type": "LIBRARY",
+                                "algorithm": "VARIOUS",
+                                "key_size": None,
+                                "is_quantum_safe": False,
+                                "version": "unknown"
+                            })
+            except:
+                pass
             
-        # For a production system, we would add pyproject.toml, Pipfile, pom.xml, etc.
     return assets
