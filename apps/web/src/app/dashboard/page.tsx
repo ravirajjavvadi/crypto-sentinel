@@ -163,7 +163,7 @@ export default function DashboardPage() {
                 <tbody>
                   {stats.recent_assets.map((asset: any) => (
                     <tr key={asset.id} className="border-b border-gray-800 hover:bg-gray-800/50 transition-colors">
-                      <th scope="row" className="px-6 py-4 font-medium text-white whitespace-nowrap">
+                      <th scope="row" className="px-6 py-4 font-medium text-white whitespace-normal break-all max-w-[200px]" title={asset.name}>
                         {asset.name}
                       </th>
                       <td className="px-6 py-4 font-mono text-xs text-cyan-400">

@@ -117,7 +117,7 @@ export default function CBOMPage() {
                     <td className="px-6 py-4 font-mono text-[10px] text-gray-500">
                       urn:uuid:{Math.random().toString(36).substring(2, 15)}
                     </td>
-                    <th scope="row" className="px-6 py-4 font-medium text-white whitespace-nowrap">
+                    <th scope="row" className="px-6 py-4 font-medium text-white whitespace-normal break-all max-w-[250px]" title={asset.name}>
                       {asset.name}
                     </th>
                     <td className="px-6 py-4 font-mono text-xs text-blue-400">
