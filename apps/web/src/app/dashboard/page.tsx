@@ -21,22 +21,28 @@ export default function DashboardPage() {
       })
       .then((data) => setOrg(data))
       .catch(() => router.push("/login"));
+  }, [router]);
 
-    // Fetch stats
-    let url = "/api/scans/stats";
-    if (selectedProject !== "ALL") {
-      url += `?project_id=${selectedProject}`;
-    }
+  useEffect(() => {
+    const query = selectedProject !== "ALL" ? `?project_id=${selectedProject}` : "";
+    
+    const fetchStats = () => {
+      fetch(`/api/scans/stats${query}`)
+        .then((res) => {
+          if (!res.ok) throw new Error("Unauthorized");
+          return res.json();
+        })
+        .then((data) => setStats(data))
+        .catch(console.error);
+    };
 
-    fetch(url, { cache: "no-store" })
-      .then((res) => {
-        if (!res.ok) throw new Error("Unauthorized");
-        return res.json();
-      })
-      .then((data) => setStats(data))
-      .catch(console.error);
-
-  }, [router, selectedProject]);
+    // Initial fetch
+    fetchStats();
+    
+    // Auto-refresh every 5 seconds to catch background task completion
+    const interval = setInterval(fetchStats, 5000);
+    return () => clearInterval(interval);
+  }, [selectedProject]);
 
   if (!org || !stats) return (
     <div className="min-h-screen bg-black text-cyan-400 flex items-center justify-center font-mono">

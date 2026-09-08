@@ -12,13 +12,20 @@ export default function CBOMPage() {
 
   useEffect(() => {
     const query = selectedProject !== "ALL" ? `?project_id=${selectedProject}` : "";
-    fetch(`/api/scans/stats${query}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Unauthorized");
-        return res.json();
-      })
-      .then((data) => setStats(data))
-      .catch(() => router.push("/login"));
+    
+    const fetchStats = () => {
+      fetch(`/api/scans/stats${query}`)
+        .then((res) => {
+          if (!res.ok) throw new Error("Unauthorized");
+          return res.json();
+        })
+        .then((data) => setStats(data))
+        .catch(() => router.push("/login"));
+    };
+
+    fetchStats();
+    const interval = setInterval(fetchStats, 5000);
+    return () => clearInterval(interval);
   }, [router, selectedProject]);
 
   const handleExport = (format: string) => {

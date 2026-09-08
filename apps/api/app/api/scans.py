@@ -118,6 +118,20 @@ async def upload_and_scan(
 
     return scan
 
+@router.get("/debug")
+def get_debug(db: Session = Depends(get_db)):
+    from app.models.tenancy import Asset, Scan, Project
+    assets = db.query(Asset).all()
+    scans = db.query(Scan).all()
+    joined_assets = db.query(Asset).join(Scan).all()
+    return {
+        "assets_count": len(assets),
+        "scans_count": len(scans),
+        "joined_count": len(joined_assets),
+        "assets": [{"id": a.id, "scan_id": a.scan_id, "name": a.name} for a in assets],
+        "scans": [{"id": s.id, "project_id": s.project_id} for s in scans]
+    }
+
 from typing import Optional
 
 @router.get("/stats", response_model=dict)

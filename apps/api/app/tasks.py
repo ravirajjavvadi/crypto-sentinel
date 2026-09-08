@@ -162,16 +162,28 @@ def repo_scan_task(scan_id: int, repo_url: str, org_id: int):
             import zipfile
             import io
             
-            # Convert https://github.com/org/repo to https://api.github.com/repos/org/repo/zipball
-            parts = repo_url.rstrip('/').split('/')
-            if "github.com" in repo_url and len(parts) >= 2:
-                org, repo = parts[-2], parts[-1]
-                zip_url = f"https://api.github.com/repos/{org}/{repo}/zipball"
-                
-                req = urllib.request.Request(zip_url, headers={'User-Agent': 'CryptoSentinel-Bot'})
-                with urllib.request.urlopen(req) as response:
-                    with zipfile.ZipFile(io.BytesIO(response.read())) as zip_ref:
-                        zip_ref.extractall(extract_dir)
+            # Convert https://github.com/org/repo to https://github.com/org/repo/archive/refs/heads/main.zip
+            if "github.com" in repo_url:
+                repo_base = repo_url.rstrip('/')
+                if repo_base.endswith('.git'):
+                    repo_base = repo_base[:-4]
+                    
+                downloaded = False
+                for branch in ['main', 'master']:
+                    zip_url = f"{repo_base}/archive/refs/heads/{branch}.zip"
+                    try:
+                        req = urllib.request.Request(zip_url, headers={'User-Agent': 'Mozilla/5.0'})
+                        with urllib.request.urlopen(req) as response:
+                            with zipfile.ZipFile(io.BytesIO(response.read())) as zip_ref:
+                                zip_ref.extractall(extract_dir)
+                        downloaded = True
+                        break
+                    except Exception as e:
+                        print(f"Failed to download {branch}: {e}")
+                        continue
+                        
+                if not downloaded:
+                    raise Exception("Both main and master branch downloads failed")
             else:
                 subprocess.run(["git", "clone", "--depth", "1", repo_url, extract_dir], check=True, capture_output=True)
         except Exception as dl_err:
