@@ -68,7 +68,7 @@ export default function DashboardPage() {
               <span className="text-xl font-black text-white tracking-widest glow-text uppercase">CryptoSentinel</span>
             </div>
             <div className="flex items-center gap-6">
-              <Link href="/graph" className="text-xs text-purple-400 hover:text-purple-300 tracking-widest uppercase transition-colors hidden sm:block">
+              <Link href="/threat-matrix" className="text-xs text-purple-400 hover:text-purple-300 tracking-widest uppercase transition-colors hidden sm:block">
                 [ THREAT MATRIX ]
               </Link>
               <Link href="/cbom" className="text-xs text-cyan-400 hover:text-cyan-300 tracking-widest uppercase transition-colors hidden sm:block">

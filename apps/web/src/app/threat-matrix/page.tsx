@@ -6,18 +6,68 @@ import Link from "next/link";
 
 export default function GraphPage() {
   const router = useRouter();
+  const [stats, setStats] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   
+  // Filters
+  const [typeFilter, setTypeFilter] = useState("ALL");
+  const [expiryFilter, setExpiryFilter] = useState("ALL");
+
   useEffect(() => {
-    // Just rely on middleware for now, or check via fetch
-    fetch("/api/organizations/me").then(res => {
-        if (!res.ok) router.push("/login");
-    }).catch(() => router.push("/login"));
+    fetch("/api/scans/stats")
+      .then((res) => {
+        if (!res.ok) throw new Error("Unauthorized");
+        return res.json();
+      })
+      .then((data) => {
+        setStats(data);
+        setLoading(false);
+      })
+      .catch(() => router.push("/login"));
   }, [router]);
+
+  if (loading || !stats) {
+    return (
+      <div className="min-h-screen bg-black text-cyan-400 flex items-center justify-center font-mono">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="tracking-widest animate-pulse text-sm">INITIALIZING THREAT MATRIX...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const assets = stats.recent_assets || [];
+  const projects = stats.projects_list || [];
+  
+  // Filter Logic
+  const filteredAssets = assets.filter((asset: any) => {
+    // Type Filter
+    if (typeFilter !== "ALL" && asset.type !== typeFilter) return false;
+    
+    // Expiry Filter
+    if (expiryFilter !== "ALL") {
+      if (!asset.expiration_date) return false;
+      const expDate = new Date(asset.expiration_date);
+      const now = new Date();
+      const diffTime = expDate.getTime() - now.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (expiryFilter === "EXPIRED" && diffDays >= 0) return false;
+      if (expiryFilter === "EXPIRING_SOON" && (diffDays < 0 || diffDays > 90)) return false;
+    }
+    
+    return true;
+  });
+
+  // Basic layout math
+  const centerX = 500;
+  const centerY = 300;
+  const radius = 200;
+  const totalNodes = filteredAssets.length;
 
   return (
     <div className="relative min-h-screen bg-black text-gray-300 font-mono overflow-hidden selection:bg-cyan-500/30">
-      
-      {/* Dashboard Nav */}
       <nav className="relative z-50 border-b border-cyan-900/50 bg-black/80 backdrop-blur-md">
         <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
@@ -38,70 +88,121 @@ export default function GraphPage() {
 
       <main className="relative z-10 h-[calc(100vh-64px)] w-full">
         {/* Graph Overlay UI */}
-        <div className="absolute top-4 left-4 z-20 glass-panel p-4 w-64">
-          <h2 className="text-xs text-cyan-400 mb-2 border-b border-cyan-900 pb-1">LEGEND</h2>
-          <div className="space-y-2 text-[10px]">
-            <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-white shadow-[0_0_5px_white]"></div> Project Node</div>
-            <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_5px_blue]"></div> Library / Dependency</div>
-            <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-cyan-500 shadow-[0_0_5px_cyan]"></div> Cryptographic Asset</div>
-            <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_5px_red] animate-pulse"></div> Vulnerability / PQC Risk</div>
+        <div className="absolute top-4 left-4 z-20 glass-panel p-4 w-64 space-y-4">
+          <div>
+            <h2 className="text-xs text-cyan-400 mb-2 border-b border-cyan-900 pb-1">LEGEND</h2>
+            <div className="space-y-2 text-[10px]">
+              <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-white shadow-[0_0_5px_white]"></div> Target Scope</div>
+              <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_5px_blue]"></div> Library / Dependency</div>
+              <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-cyan-500 shadow-[0_0_5px_cyan]"></div> Cryptographic Asset</div>
+              <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_5px_red] animate-pulse"></div> At Risk / Expiring</div>
+            </div>
+          </div>
+          
+          <div>
+            <h2 className="text-xs text-purple-400 mb-2 border-b border-purple-900 pb-1">FILTERS</h2>
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block text-gray-500 mb-1">ASSET TYPE</label>
+                <select 
+                  className="w-full bg-black border border-cyan-900/50 text-cyan-400 p-1"
+                  value={typeFilter}
+                  onChange={(e) => setTypeFilter(e.target.value)}
+                >
+                  <option value="ALL">ALL TYPES</option>
+                  <option value="LIBRARY">LIBRARY</option>
+                  <option value="CERTIFICATE">CERTIFICATE</option>
+                  <option value="KEY">KEY</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-gray-500 mb-1">EXPIRY STATUS</label>
+                <select 
+                  className="w-full bg-black border border-cyan-900/50 text-cyan-400 p-1"
+                  value={expiryFilter}
+                  onChange={(e) => setExpiryFilter(e.target.value)}
+                >
+                  <option value="ALL">ALL DATES</option>
+                  <option value="EXPIRING_SOON">EXPIRING SOON (&lt; 90D)</option>
+                  <option value="EXPIRED">EXPIRED</option>
+                </select>
+              </div>
+            </div>
           </div>
         </div>
         
         <div className="absolute bottom-4 right-4 z-20 glass-panel p-4 text-[10px] text-right">
-          <p className="text-cyan-400">ENGINE: VIGHNARAJA GRAPH_QL</p>
-          <p className="text-gray-500">NODES: 1,429 | EDGES: 3,892</p>
-          <p className="text-gray-500">LAYOUT: FORCE-DIRECTED SIMULATION</p>
+          <p className="text-cyan-400">ENGINE: VIGHNARAJA GRAPH_QL (LIVE)</p>
+          <p className="text-gray-500">NODES: {filteredAssets.length + 1} | EDGES: {filteredAssets.length}</p>
+          <p className="text-gray-500">LAYOUT: RADIAL SIMULATION</p>
         </div>
 
-        {/* CSS-based Mock Graph */}
+        {/* CSS-based Dynamic Graph */}
         <div className="absolute inset-0 w-full h-full flex items-center justify-center pointer-events-none">
-            <svg className="w-[80vw] h-[80vh] opacity-60" viewBox="0 0 1000 600">
+            <svg className="w-[80vw] h-[80vh] opacity-80" viewBox="0 0 1000 600">
                 <g className="edges" stroke="#22d3ee" strokeWidth="1" strokeOpacity="0.4">
-                    <line x1="500" y1="300" x2="300" y2="150" className="animate-pulse" />
-                    <line x1="500" y1="300" x2="700" y2="200" />
-                    <line x1="500" y1="300" x2="600" y2="500" />
-                    <line x1="500" y1="300" x2="400" y2="450" />
-                    <line x1="300" y1="150" x2="200" y2="100" />
-                    <line x1="300" y1="150" x2="250" y2="250" stroke="#ef4444" strokeWidth="2" strokeOpacity="0.8" />
-                    <line x1="700" y1="200" x2="800" y2="150" />
-                    <line x1="700" y1="200" x2="850" y2="300" />
-                    <line x1="600" y1="500" x2="750" y2="550" />
+                    {filteredAssets.map((asset: any, i: number) => {
+                        const angle = (i / totalNodes) * 2 * Math.PI;
+                        const staggeredRadius = radius + (i % 3 === 0 ? 50 : i % 3 === 1 ? -50 : 0) + (i % 5 === 0 ? 30 : 0);
+                        const x = centerX + staggeredRadius * Math.cos(angle);
+                        const y = centerY + staggeredRadius * Math.sin(angle);
+                        
+                        let isRisk = false;
+                        if (asset.expiration_date) {
+                            const diffDays = Math.ceil((new Date(asset.expiration_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                            if (diffDays < 90) isRisk = true;
+                        }
+                        if (!asset.safe) isRisk = true;
+
+                        return (
+                            <line 
+                                key={`edge-${asset.id}`} 
+                                x1={centerX} y1={centerY} 
+                                x2={x} y2={y} 
+                                className={isRisk ? "animate-pulse" : ""}
+                                stroke={isRisk ? "#ef4444" : "#22d3ee"}
+                            />
+                        );
+                    })}
                 </g>
                 <g className="nodes">
                     {/* Central Project Node */}
-                    <circle cx="500" cy="300" r="15" fill="#ffffff" className="animate-pulse" />
-                    <text x="500" y="330" fill="white" fontSize="12" textAnchor="middle" className="font-mono">core-auth-service</text>
+                    <circle cx={centerX} cy={centerY} r="20" fill="#ffffff" className="animate-pulse shadow-[0_0_15px_white]" />
+                    <text x={centerX} y={centerY + 35} fill="white" fontSize="14" textAnchor="middle" className="font-mono font-bold">ALL TARGETS</text>
                     
-                    {/* Level 1 Nodes */}
-                    <circle cx="300" cy="150" r="10" fill="#3b82f6" />
-                    <text x="300" y="130" fill="#3b82f6" fontSize="10" textAnchor="middle">cryptography==3.4</text>
-                    
-                    <circle cx="700" cy="200" r="10" fill="#3b82f6" />
-                    <text x="700" y="180" fill="#3b82f6" fontSize="10" textAnchor="middle">aws-encryption-sdk</text>
+                    {/* Dynamic Assets Nodes */}
+                    {filteredAssets.map((asset: any, i: number) => {
+                        const angle = (i / totalNodes) * 2 * Math.PI;
+                        // Stagger the radius to avoid overlaps for large datasets
+                        const staggeredRadius = radius + (i % 3 === 0 ? 50 : i % 3 === 1 ? -50 : 0) + (i % 5 === 0 ? 30 : 0);
+                        const x = centerX + staggeredRadius * Math.cos(angle);
+                        const y = centerY + staggeredRadius * Math.sin(angle);
+                        
+                        let color = "#06b6d4"; // Cyan for certificates
+                        if (asset.type === "LIBRARY") color = "#3b82f6"; // Blue
+                        if (asset.type === "KEY") color = "#eab308"; // Yellow
+                        
+                        let isRisk = false;
+                        if (asset.expiration_date) {
+                            const diffDays = Math.ceil((new Date(asset.expiration_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                            if (diffDays < 90) isRisk = true;
+                        }
+                        
+                        if (isRisk) color = "#ef4444"; // Red for risk
 
-                    <circle cx="600" cy="500" r="10" fill="#06b6d4" />
-                    <text x="600" y="480" fill="#06b6d4" fontSize="10" textAnchor="middle">x509_cert_prod</text>
-                    
-                    <circle cx="400" cy="450" r="8" fill="#06b6d4" />
-                    <text x="400" y="435" fill="#06b6d4" fontSize="10" textAnchor="middle">hashlib.md5</text>
-
-                    {/* Level 2 Nodes (Vulnerabilities/Assets) */}
-                    <circle cx="200" cy="100" r="6" fill="#06b6d4" />
-                    <text x="200" y="85" fill="#06b6d4" fontSize="8" textAnchor="middle">AES-256-GCM</text>
-
-                    <circle cx="250" cy="250" r="12" fill="#ef4444" className="animate-ping" />
-                    <circle cx="250" cy="250" r="8" fill="#ef4444" />
-                    <text x="250" y="275" fill="#ef4444" fontSize="10" textAnchor="middle" fontWeight="bold">HARDCODED_KEY</text>
-
-                    <circle cx="800" cy="150" r="6" fill="#06b6d4" />
-                    <text x="800" y="135" fill="#06b6d4" fontSize="8" textAnchor="middle">KMS_RSA_2048</text>
-
-                    <circle cx="850" cy="300" r="8" fill="#eab308" />
-                    <text x="850" y="285" fill="#eab308" fontSize="10" textAnchor="middle">PQC_RISK: RSA</text>
-                    
-                    <circle cx="750" cy="550" r="6" fill="#06b6d4" />
-                    <text x="750" y="535" fill="#06b6d4" fontSize="8" textAnchor="middle">ECDSA_SECP256R1</text>
+                        return (
+                            <g key={`node-${asset.id}`}>
+                                {isRisk && <circle cx={x} cy={y} r="14" fill={color} className="animate-ping opacity-50" />}
+                                <circle cx={x} cy={y} r="6" fill={color} />
+                                {/* Only show text for a few nodes if there are too many to avoid clutter */}
+                                {(totalNodes < 50 || isRisk || i % 10 === 0) && (
+                                    <text x={x} y={y + 15} fill={color} fontSize="8" textAnchor="middle" className="font-mono max-w-[100px]">
+                                        {asset.name.length > 20 ? asset.name.substring(0, 20) + "..." : asset.name}
+                                    </text>
+                                )}
+                            </g>
+                        );
+                    })}
                 </g>
             </svg>
         </div>
