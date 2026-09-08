@@ -155,7 +155,28 @@ def repo_scan_task(scan_id: int, repo_url: str, org_id: int):
         db.commit()
 
         extract_dir = tempfile.mkdtemp()
-        subprocess.run(["git", "clone", "--depth", "1", repo_url, extract_dir], check=True, capture_output=True)
+        
+        # Download ZIP instead of git clone to avoid missing git dependency on Railway
+        try:
+            import urllib.request
+            import zipfile
+            import io
+            
+            # Convert https://github.com/org/repo to https://api.github.com/repos/org/repo/zipball
+            parts = repo_url.rstrip('/').split('/')
+            if "github.com" in repo_url and len(parts) >= 2:
+                org, repo = parts[-2], parts[-1]
+                zip_url = f"https://api.github.com/repos/{org}/{repo}/zipball"
+                
+                req = urllib.request.Request(zip_url, headers={'User-Agent': 'CryptoSentinel-Bot'})
+                with urllib.request.urlopen(req) as response:
+                    with zipfile.ZipFile(io.BytesIO(response.read())) as zip_ref:
+                        zip_ref.extractall(extract_dir)
+            else:
+                subprocess.run(["git", "clone", "--depth", "1", repo_url, extract_dir], check=True, capture_output=True)
+        except Exception as dl_err:
+            print(f"Download failed, falling back to git clone: {dl_err}")
+            subprocess.run(["git", "clone", "--depth", "1", repo_url, extract_dir], check=True, capture_output=True)
 
         scan.status = ScanStatus.ANALYZING
         db.commit()
