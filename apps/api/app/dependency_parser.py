@@ -66,12 +66,19 @@ def parse_package_json(file_path: str):
         print(f"Error parsing package.json: {e}")
     return assets
 
-def scan_directory_for_dependencies(directory_path: str):
+def scan_directory_for_dependencies(directory_path: str, repo_url: str = ""):
     assets = []
     
     # Try to detect if the repository itself is a known crypto repo based on the root folder name or url
-    repo_name = os.path.basename(directory_path.rstrip('/\\'))
-    if any(known.lower() in repo_name.lower() for known in KNOWN_CRYPTO_LIBRARIES["python"] + KNOWN_CRYPTO_LIBRARIES["javascript"] + KNOWN_CRYPTO_LIBRARIES["java"]):
+    repo_name = ""
+    if repo_url:
+        repo_name = repo_url.rstrip('/').split('/')[-1]
+        if repo_name.endswith('.git'):
+            repo_name = repo_name[:-4]
+    else:
+        repo_name = os.path.basename(directory_path.rstrip('/\\'))
+        
+    if repo_name and any(known.lower() in repo_name.lower() for known in KNOWN_CRYPTO_LIBRARIES["python"] + KNOWN_CRYPTO_LIBRARIES["javascript"] + KNOWN_CRYPTO_LIBRARIES["java"]):
         assets.append({
             "name": repo_name,
             "asset_type": "LIBRARY",

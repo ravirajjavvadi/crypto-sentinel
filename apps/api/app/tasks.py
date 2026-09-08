@@ -161,7 +161,7 @@ def repo_scan_task(scan_id: int, repo_url: str, org_id: int):
         db.commit()
 
         results = scan_project(extract_dir)
-        dependency_assets = scan_directory_for_dependencies(extract_dir)
+        dependency_assets = scan_directory_for_dependencies(extract_dir, repo_url)
 
         for finding_data in results["findings"]:
             finding = Finding(
