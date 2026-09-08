@@ -1,4 +1,4 @@
-"use client";
+ï»¿"use client";
 
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -201,7 +201,7 @@ export default function GraphPage() {
           
           <div className="mt-4 pt-4 border-t border-cyan-900/50">
             <p className="text-[10px] text-gray-500 mb-1">CONTROLS</p>
-            <p className="text-[10px] text-gray-400">Scroll to Zoom • Click & Drag to Pan • Click Node for AI Insights</p>
+            <p className="text-[10px] text-gray-400">Scroll to Zoom â€¢ Click & Drag to Pan â€¢ Click Node for AI Insights</p>
           </div>
         </div>
         
@@ -235,7 +235,7 @@ export default function GraphPage() {
                 </div>
                 <div className="bg-black/40 p-2 border border-gray-800 rounded">
                   <span className="block text-[9px] text-gray-500 uppercase tracking-widest mb-1">Key Size</span>
-                  <span className="font-mono text-cyan-300">{selectedAsset.key_size ? \\-bit\ : "N/A"}</span>
+                  <span className="font-mono text-cyan-300">{selectedAsset.key_size ? `${selectedAsset.key_size}-bit` : "N/A"}</span>
                 </div>
                 <div className="bg-black/40 p-2 border border-gray-800 rounded">
                   <span className="block text-[9px] text-gray-500 uppercase tracking-widest mb-1">PQC Safe</span>
@@ -291,7 +291,7 @@ export default function GraphPage() {
           onMouseLeave={handleMouseUp}
         >
             <svg ref={svgRef} className="w-full h-full" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid slice">
-                <g transform={\	ranslate(\, \) scale(\)\}>
+                <g transform={`translate(${transform.x}, ${transform.y}) scale(${transform.k})`}>
                   <g className="edges" stroke="#22d3ee" strokeWidth="1" strokeOpacity="0.4">
                       {filteredAssets.map((asset: any, i: number) => {
                           const angle = (i / totalNodes) * 2 * Math.PI;
@@ -308,7 +308,7 @@ export default function GraphPage() {
 
                           return (
                               <line 
-                                  key={\edge-\\} 
+                                  key={`edge-${asset.id}`} 
                                   x1={centerX} y1={centerY} 
                                   x2={x} y2={y} 
                                   className={isRisk ? "animate-pulse" : ""}
@@ -343,10 +343,9 @@ export default function GraphPage() {
 
                           return (
                               <g 
-                                key={\
-ode-\\} 
+                                key={`node-${asset.id}`} 
                                 className="cursor-pointer transition-transform hover:scale-150 origin-center group"
-                                style={{ transformOrigin: \\px \px\ }}
+                                style={{ transformOrigin: `${x}px ${y}px` }}
                                 onClick={(e) => {
                                   e.stopPropagation(); // prevent drag trigger if any
                                   setSelectedAsset(asset);
