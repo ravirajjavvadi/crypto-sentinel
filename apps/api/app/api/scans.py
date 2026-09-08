@@ -162,6 +162,7 @@ def get_stats(
         quantum_exposure = assets_query.filter(Asset.is_quantum_safe == False).count()
         
         recent_assets_q = assets_query.order_by(Asset.created_at.desc()).all()
+        recent_findings_q = findings_query.order_by(Finding.created_at.desc()).all()
         
         recent_assets = []
         for a in recent_assets_q:
@@ -176,6 +177,18 @@ def get_stats(
                 "domain": a.domain,
                 "version": a.version
             })
+
+        recent_findings = []
+        for f in recent_findings_q:
+            recent_findings.append({
+                "id": f.id,
+                "rule_id": f.rule_id,
+                "message": f.message,
+                "severity": f.severity.value if hasattr(f.severity, 'value') else f.severity,
+                "file_path": f.file_path,
+                "line_number": f.line_number,
+                "algorithm": f.algorithm
+            })
             
         return {
             "projects_count": len(projects_list),
@@ -183,7 +196,8 @@ def get_stats(
             "assets": assets_count,
             "critical_findings": critical_findings,
             "quantum_exposure": quantum_exposure,
-            "recent_assets": recent_assets
+            "recent_assets": recent_assets,
+            "recent_findings": recent_findings
         }
     except Exception as e:
         import traceback
