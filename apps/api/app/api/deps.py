@@ -1,16 +1,17 @@
-﻿from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.models.tenancy import User, UserRole, Organization
+from app.core.security import SECRET_KEY
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
 
 def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)) -> User:
     try:
         # Decode Supabase JWT
-        payload = jwt.decode(token, options={"verify_signature": False})
+        payload = jwt.decode(token, key=SECRET_KEY, options={"verify_signature": False})
         email = payload.get("email")
         if not email:
             raise HTTPException(status_code=401, detail="Invalid auth credentials (no email in token)")

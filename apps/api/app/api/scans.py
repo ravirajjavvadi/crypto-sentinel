@@ -114,7 +114,7 @@ async def upload_and_scan(
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    background_tasks.add_task(dummy_scan_task, scan.id, file_path)
+    background_tasks.add_task(dummy_scan_task, scan.id, file_path, current_user.organization_id)
 
     return scan
 
