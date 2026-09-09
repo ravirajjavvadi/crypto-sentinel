@@ -11,7 +11,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
 def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)) -> User:
     try:
         # Decode Supabase JWT
-        payload = jwt.decode(token, key=SECRET_KEY, options={"verify_signature": False})
+        payload = jwt.get_unverified_claims(token)
         email = payload.get("email")
         if not email:
             raise HTTPException(status_code=401, detail="Invalid auth credentials (no email in token)")
