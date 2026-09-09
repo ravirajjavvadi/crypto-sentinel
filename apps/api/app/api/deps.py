@@ -23,16 +23,15 @@ def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_
     
     # Auto-provision if missing (bridge Next.js Supabase Auth with FastAPI local DB)
     if not user:
-        org = db.query(Organization).first()
-        if not org:
-            org = Organization(name="CryptoSentinel Corp")
-            db.add(org)
-            db.commit()
-            db.refresh(org)
+        # Create a completely new isolated organization for independent signups
+        org_name = f"{email.split('@')[0].capitalize()}'s Organization"
+        org = Organization(name=org_name)
+        db.add(org)
+        db.commit()
+        db.refresh(org)
             
-        # First user is ORG_OWNER
-        is_first = db.query(User).count() == 0
-        role = UserRole.ORG_OWNER if is_first or email == "ravirajjavvadhi@gmail.com" else UserRole.VIEWER
+        # Independent signups are automatically the owner of their new organization
+        role = UserRole.ORG_OWNER
         
         user = User(email=email, hashed_password="sso", organization_id=org.id, role=role)
         db.add(user)
