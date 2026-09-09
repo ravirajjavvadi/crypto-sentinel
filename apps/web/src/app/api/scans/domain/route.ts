@@ -10,15 +10,15 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { url } = await request.json();
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const body = await request.json();
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "https://crypto-sentinel-production-c1e6.up.railway.app";
     const res = await fetch(`${backendUrl}/api/scans/scan/domain`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${session.access_token}`
       },
-      body: JSON.stringify({ domain_url: url })
+      body: JSON.stringify({ domain_url: body.url })
     });
 
     if (!res.ok) {

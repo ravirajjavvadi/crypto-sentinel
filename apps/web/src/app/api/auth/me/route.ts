@@ -10,7 +10,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "https://crypto-sentinel-production-c1e6.up.railway.app";
     const res = await fetch(`${backendUrl}/api/auth/me`, {
       headers: {
         Authorization: `Bearer ${session.access_token}`

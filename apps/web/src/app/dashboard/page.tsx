@@ -13,23 +13,33 @@ export default function DashboardPage() {
   const [selectedProject, setSelectedProject] = useState<string>("ALL");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [userRole, setUserRole] = useState<string>("VIEWER");
+  const [systemWaking, setSystemWaking] = useState(false);
 
   useEffect(() => {
     // Fetch org and user profile
     Promise.all([
       fetch("/api/organizations/me").then(res => {
+        if (res.status >= 500) throw new Error("BACKEND_DOWN");
         if (!res.ok) throw new Error("Unauthorized");
         return res.json();
       }),
       fetch("/api/auth/me").then(res => {
+        if (res.status >= 500) throw new Error("BACKEND_DOWN");
         if (!res.ok) return { role: "VIEWER" };
         return res.json();
       })
     ]).then(([orgData, userData]) => {
       setOrg(orgData);
       setUserRole(userData.role);
-    }).catch(() => {
-      router.push("/login");
+      setSystemWaking(false);
+    }).catch((err) => {
+      if (err.message === "BACKEND_DOWN") {
+        setSystemWaking(true);
+        // Retry in 5 seconds
+        setTimeout(() => window.location.reload(), 5000);
+      } else {
+        router.push("/login");
+      }
     });
   }, [router]);
 
@@ -56,6 +66,18 @@ export default function DashboardPage() {
     const interval = setInterval(fetchStats, 5000);
     return () => clearInterval(interval);
   }, [selectedProject, router]);
+
+  if (systemWaking) {
+    return (
+      <div className="min-h-screen bg-black text-cyan-400 flex items-center justify-center font-mono">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="tracking-widest animate-pulse text-sm">BACKEND SYSTEM WAKING UP FROM SLEEP...</p>
+          <p className="text-xs text-gray-500">(Render free tier cold start takes ~50s)</p>
+        </div>
+      </div>
+    );
+  }
 
   if (loading || !org || !stats) return (
     <div className="min-h-screen bg-black text-cyan-400 flex items-center justify-center font-mono">

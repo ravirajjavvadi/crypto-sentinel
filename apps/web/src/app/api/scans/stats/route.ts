@@ -14,7 +14,7 @@ export async function GET(request: Request) {
     const projectId = searchParams.get("project_id");
     const query = (projectId && projectId !== "ALL") ? `?project_id=${projectId}` : "";
 
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "https://crypto-sentinel-production-c1e6.up.railway.app";
     const res = await fetch(`${backendUrl}/api/scans/stats${query}`, {
       headers: {
         Authorization: `Bearer ${session.access_token}`

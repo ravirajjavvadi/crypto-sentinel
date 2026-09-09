@@ -11,7 +11,7 @@ export async function POST(request: Request) {
 
   try {
     const { url } = await request.json();
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "https://crypto-sentinel-production-c1e6.up.railway.app";
     const res = await fetch(`${backendUrl}/api/scans/scan/repo`, {
       method: "POST",
       headers: {

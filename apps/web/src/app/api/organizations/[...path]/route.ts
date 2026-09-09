@@ -27,7 +27,7 @@ async function proxyToBackend(request: Request, pathArray: string[]) {
   }
 
   try {
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "https://crypto-sentinel-production-c1e6.up.railway.app";
     const pathStr = pathArray ? pathArray.join("/") : "";
     
     // Copy the request body if it exists
