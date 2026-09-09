@@ -78,7 +78,7 @@ async def scan_domain(
     db.commit()
     db.refresh(scan)
 
-    background_tasks.add_task(domain_scan_task, scan.id, request.domain_url, db)
+    background_tasks.add_task(domain_scan_task, scan.id, request.domain_url, current_user.organization_id)
     return scan
 
 @router.post("/project/{project_id}/scan", response_model=ScanResponse)

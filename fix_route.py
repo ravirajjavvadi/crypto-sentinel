@@ -1,4 +1,9 @@
-import { NextResponse } from "next/server";
+﻿import os
+
+path = r"apps\web\src\app\api\organizations\[...path]\route.ts"
+os.makedirs(os.path.dirname(path), exist_ok=True)
+
+content = """import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 
 export async function GET(request: Request, { params }: { params: { path: string[] } }) {
@@ -51,3 +56,9 @@ async function proxyToBackend(request: Request, pathArray: string[]) {
     return NextResponse.json({ detail: "Backend Proxy Error" }, { status: 500 });
   }
 }
+"""
+
+with open(path, "w", encoding="utf-8") as f:
+    f.write(content)
+
+print("Successfully wrote route.ts")
