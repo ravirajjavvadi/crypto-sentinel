@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.models.tenancy import Project, Scan, User, UserRole, ScanStatus
 from app.schemas.scan import ScanResponse
-from app.api.deps import get_current_active_user
+from app.api.deps import get_current_active_user, RoleChecker
 from app.tasks import repo_scan_task, domain_scan_task, dummy_scan_task
 
 router = APIRouter()
@@ -20,6 +20,8 @@ class RepoScanRequest(BaseModel):
 
 class DomainScanRequest(BaseModel):
     domain_url: str
+
+WRITE_ROLES = [UserRole.ORG_OWNER, UserRole.SECURITY_ADMIN, UserRole.DEVELOPER]
 
 @router.post("/scan/repo", response_model=ScanResponse)
 async def scan_repo(
@@ -57,18 +59,16 @@ async def scan_domain(
     request: DomainScanRequest,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(RoleChecker(WRITE_ROLES)),
 ):
+    project_name = f"Domain: {request.domain_url}"
     project = db.query(Project).filter(
-        Project.name == request.domain_url,
+        Project.name == project_name,
         Project.organization_id == current_user.organization_id
     ).first()
 
     if not project:
-        project = Project(
-            name=request.domain_url,
-            organization_id=current_user.organization_id
-        )
+        project = Project(name=project_name, organization_id=current_user.organization_id)
         db.add(project)
         db.commit()
         db.refresh(project)
@@ -78,7 +78,7 @@ async def scan_domain(
     db.commit()
     db.refresh(scan)
 
-    background_tasks.add_task(domain_scan_task, scan.id, request.domain_url, current_user.organization_id)
+    background_tasks.add_task(domain_scan_task, scan.id, request.domain_url, db)
     return scan
 
 @router.post("/project/{project_id}/scan", response_model=ScanResponse)
@@ -87,7 +87,7 @@ async def upload_and_scan(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(RoleChecker(WRITE_ROLES)),
 ):
     # Verify project exists and belongs to user's org
     project = db.query(Project).filter(

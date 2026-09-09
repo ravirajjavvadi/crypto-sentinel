@@ -9,18 +9,28 @@ export default function DashboardPage() {
   const router = useRouter();
   const [org, setOrg] = useState<{ name: string } | null>(null);
   const [stats, setStats] = useState<any>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [selectedProject, setSelectedProject] = useState<string>("ALL");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [userRole, setUserRole] = useState<string>("VIEWER");
 
   useEffect(() => {
-    // Fetch org
-    fetch("/api/organizations/me")
-      .then((res) => {
+    // Fetch org and user profile
+    Promise.all([
+      fetch("/api/organizations/me").then(res => {
         if (!res.ok) throw new Error("Unauthorized");
         return res.json();
+      }),
+      fetch("/api/auth/me").then(res => {
+        if (!res.ok) return { role: "VIEWER" };
+        return res.json();
       })
-      .then((data) => setOrg(data))
-      .catch(() => router.push("/login"));
+    ]).then(([orgData, userData]) => {
+      setOrg(orgData);
+      setUserRole(userData.role);
+    }).catch(() => {
+      router.push("/login");
+    });
   }, [router]);
 
   useEffect(() => {
@@ -32,8 +42,11 @@ export default function DashboardPage() {
           if (!res.ok) throw new Error("Unauthorized");
           return res.json();
         })
-        .then((data) => setStats(data))
-        .catch(console.error);
+        .then((data) => {
+          setStats(data);
+          setLoading(false);
+        })
+        .catch(() => router.push("/login"));
     };
 
     // Initial fetch
@@ -42,9 +55,9 @@ export default function DashboardPage() {
     // Auto-refresh every 5 seconds to catch background task completion
     const interval = setInterval(fetchStats, 5000);
     return () => clearInterval(interval);
-  }, [selectedProject]);
+  }, [selectedProject, router]);
 
-  if (!org || !stats) return (
+  if (loading || !org || !stats) return (
     <div className="min-h-screen bg-black text-cyan-400 flex items-center justify-center font-mono">
       <div className="flex flex-col items-center gap-4">
         <div className="w-8 h-8 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
@@ -52,6 +65,8 @@ export default function DashboardPage() {
       </div>
     </div>
   );
+
+  const canScan = ["ORG_OWNER", "SECURITY_ADMIN", "DEVELOPER"].includes(userRole);
 
   return (
     <div className="relative min-h-screen bg-black text-gray-300 font-mono overflow-x-hidden selection:bg-cyan-500/30">
@@ -110,12 +125,22 @@ export default function DashboardPage() {
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
             </select>
-            <button 
-              className="bg-cyan-500/10 border border-cyan-500 text-cyan-400 px-6 py-2 text-xs tracking-widest hover:bg-cyan-500 hover:text-black transition-all uppercase"
-              onClick={() => setIsModalOpen(true)}
-            >
-              New Scan +
-            </button>
+            {canScan && (
+              <button 
+                className="bg-cyan-500/10 border border-cyan-500 text-cyan-400 px-6 py-2 text-xs tracking-widest hover:bg-cyan-500 hover:text-black transition-all uppercase"
+                onClick={() => setIsModalOpen(true)}
+              >
+                New Scan +
+              </button>
+            )}
+            {["ORG_OWNER", "SECURITY_ADMIN"].includes(userRole) && (
+              <Link 
+                href="/organization"
+                className="bg-purple-500/10 border border-purple-500 text-purple-400 px-6 py-2 text-xs tracking-widest hover:bg-purple-500 hover:text-black transition-all uppercase flex items-center justify-center"
+              >
+                Team Management
+              </Link>
+            )}
           </div>
         </header>
         
