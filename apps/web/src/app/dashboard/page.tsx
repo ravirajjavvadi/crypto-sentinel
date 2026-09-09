@@ -67,6 +67,7 @@ export default function DashboardPage() {
   );
 
   const canScan = ["ORG_OWNER", "SECURITY_ADMIN", "DEVELOPER"].includes(userRole);
+  const canManageOrg = ["ORG_OWNER", "SECURITY_ADMIN"].includes(userRole);
 
   return (
     <div className="relative min-h-screen bg-black text-gray-300 font-mono overflow-x-hidden selection:bg-cyan-500/30">
@@ -109,14 +110,14 @@ export default function DashboardPage() {
       </nav>
 
       <main className="relative z-10 p-4 md:p-8 max-w-[1920px] mx-auto">
-        <header className="mb-8 flex justify-between items-end border-b border-gray-800 pb-4">
-          <div>
+        <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-gray-800 pb-4">
+          <div className="flex-shrink-0">
             <h1 className="text-3xl font-light text-white tracking-widest uppercase glow-text">Dashboard</h1>
             <p className="text-xs text-gray-500 mt-2 tracking-widest">CRYPTOGRAPHIC TELEMETRY</p>
           </div>
-          <div className="flex gap-4 items-center">
+          <div className="flex flex-wrap gap-4 items-center w-full md:w-auto justify-start md:justify-end">
             <select
-              className="bg-black/50 border border-gray-700 text-cyan-400 px-4 py-2 text-xs tracking-widest focus:border-cyan-500 focus:outline-none uppercase"
+              className="bg-black/50 border border-gray-700 text-cyan-400 px-4 py-2 text-xs tracking-widest focus:border-cyan-500 focus:outline-none uppercase w-full md:w-64 flex-shrink-0"
               value={selectedProject}
               onChange={(e) => setSelectedProject(e.target.value)}
             >
@@ -127,16 +128,16 @@ export default function DashboardPage() {
             </select>
             {canScan && (
               <button 
-                className="bg-cyan-500/10 border border-cyan-500 text-cyan-400 px-6 py-2 text-xs tracking-widest hover:bg-cyan-500 hover:text-black transition-all uppercase"
                 onClick={() => setIsModalOpen(true)}
+                className="px-4 py-2 border border-cyan-500 text-cyan-400 text-xs tracking-widest hover:bg-cyan-900/30 transition-colors uppercase whitespace-nowrap flex-shrink-0"
               >
                 New Scan +
               </button>
             )}
-            {["ORG_OWNER", "SECURITY_ADMIN"].includes(userRole) && (
+            {canManageOrg && (
               <Link 
                 href="/organization"
-                className="bg-purple-500/10 border border-purple-500 text-purple-400 px-6 py-2 text-xs tracking-widest hover:bg-purple-500 hover:text-black transition-all uppercase flex items-center justify-center"
+                className="px-4 py-2 border border-purple-500 text-purple-400 text-xs tracking-widest hover:bg-purple-900/30 transition-colors uppercase whitespace-nowrap flex-shrink-0 text-center"
               >
                 Team Management
               </Link>
