@@ -72,8 +72,8 @@ export default function DashboardPage() {
       <div className="min-h-screen bg-black text-cyan-400 flex items-center justify-center font-mono">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
-          <p className="tracking-widest animate-pulse text-sm">BACKEND SYSTEM WAKING UP FROM SLEEP...</p>
-          <p className="text-xs text-gray-500">(Render free tier cold start takes ~50s)</p>
+          <p className="tracking-widest animate-pulse text-sm">BACKEND SYSTEM CONNECTING...</p>
+          <p className="text-xs text-gray-500">(Establishing secure connection to Railway)</p>
         </div>
       </div>
     );
