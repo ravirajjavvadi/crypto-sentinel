@@ -1,15 +1,20 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 
-export async function GET(request: Request, { params }: { params: { path: string[] } }) {
+type RouteContext = { params: Promise<{ path: string[] }> };
+
+export async function GET(request: Request, context: RouteContext) {
+  const params = await context.params;
   return proxyToBackend(request, params.path);
 }
 
-export async function POST(request: Request, { params }: { params: { path: string[] } }) {
+export async function POST(request: Request, context: RouteContext) {
+  const params = await context.params;
   return proxyToBackend(request, params.path);
 }
 
-export async function PATCH(request: Request, { params }: { params: { path: string[] } }) {
+export async function PATCH(request: Request, context: RouteContext) {
+  const params = await context.params;
   return proxyToBackend(request, params.path);
 }
 
